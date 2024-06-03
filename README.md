@@ -8,5 +8,9 @@ Topological PCA relies only on the Numpy and Scanpy packages, and is compatible 
 
 The ST, STARmap, and Visium DLPFC data are provided in .h5ad format at ... The MERFISH, StereoSeq, and BaristaSeq data can be obtained from the pipeline of the latest Spatial Transcriptomics benchmarking study available at ...
 
+# Tutorial
+
+In tutorial.ipynb we present a brief example of the TAST workflow for Spatial Domain Detection on the ST HER2 positive breast tumor data. 
+
 # Citations 
 ...
