@@ -10,7 +10,7 @@ The ST, STARmap, and Visium DLPFC data are provided in .h5ad format at ... The M
 
 # Tutorial
 
-In tutorial.ipynb we present a brief example of the TAST workflow for Spatial Domain Detection on the ST HER2 positive breast tumor data. 
+In tutorial.ipynb we present a brief example of the TAST workflow for Spatial Domain Detection on the ST HER2 positive breast tumor data sample H1. 
 
 # Citations 
 ...
