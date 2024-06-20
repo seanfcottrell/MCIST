@@ -111,9 +111,8 @@ def TAST_SpaceFlow(adata, consensus, n_clusters, ground_truth):
         scores = []
         if ground_truth is None:
             for labels in cluster_labels:
-                ground_truth = np.ones_like(labels) # stand in for ground truth labels
                 RS = rs_full(X, labels)
-                RS_index = rs_index(RS, labels, ground_truth)
+                RS_index = rs_index(RS, labels, labels)
                 RSI = RS_index[:,2].mean()
                 scores.append(RSI) 
             max_rsi_score = max(scores)
