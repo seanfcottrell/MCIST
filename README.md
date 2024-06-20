@@ -11,7 +11,7 @@ TAST relies on the Numpy, Scanpy, SciKit-Learn, JobLib, and Mclust packages, and
 All of the 37 datasets referenced in the paper are publicly available in .h5ad format at our lab website https://users.math.msu.edu/users/weig/. 
 
 # Tutorial
-In tutorial.ipynb we present a brief example of the TAST workflow for Spatial Domain Detection and some downstream analysis on the ST HER2 positive breast tumor data, as well as a trajectory inference analysis on the DLPFC data. 
+In the Tutorial folder we present a brief example of the TAST workflow for Spatial Domain Detection and pathway enrichment analysis on the ST HER2 positive breast tumor data, as well as a trajectory inference analysis on the DLPFC data. 
 
 # RS Index
 The optional optimization of TAST (as opposed to ensemble learning) relies on computation of the Residue Similarity Index metric. The code for calculating this metric can be downloaded at: https://github.com/hozumiyu/CCP-for-Single-Cell-RNA-Sequencing/tree/main/codes/RSI. 
