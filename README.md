@@ -8,7 +8,7 @@ In this repository we present the files needed to reproduce the benchmarking res
 TAST relies on the Numpy, Scanpy, SciKit-Learn, JobLib, and Mclust packages, and is compatible with the versions used in each of the above stated models. Upon downloading the DL models, one will need to update the filepaths to reflect your workspace. For example, TAST_SpaceFlow will need to import SpaceFlow from the proper directory. For separate deep learning modules it is recommended to create and activate separate virtual environments. Once your workspace is properly set, you can run the tests for each dataset by specifying the argument (i.e. python ST.py 'H1' or python Visium_DLPFC.py '151673'). 
 
 # Data 
-All of the 37 datasets referenced in the paper are publicly available in .h5ad format at our lab website https://users.math.msu.edu/users/weig/. 
+All of the 37 datasets referenced in the paper are publicly available in .h5ad format at our lab website https://weilab.math.msu.edu/DataLibrary/SpatialTranscriptomics/. 
 
 # Tutorial
 In the Tutorial folder we present a brief example of the TAST workflow for Spatial Domain Detection and pathway enrichment analysis on the ST HER2 positive breast tumor data, as well as a trajectory inference analysis on the DLPFC data. 
