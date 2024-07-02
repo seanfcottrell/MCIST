@@ -19,10 +19,10 @@ nmi_list=[1,2,3,4,5,6,7,8,9,10]
 
 for i in range(10):
     adata2 = adata.copy()
-    n = adata2.obs['layer'].nunique()
-    adata2 = TAST_SpaceFlow(adata = adata2, consensus = False, n_clusters = n, ground_truth = adata2.obs['layer'])
+    n = adata2.obs['label'].nunique()
+    adata2 = TAST_SpaceFlow(adata = adata2, consensus = False, n_clusters = n, ground_truth = adata2.obs['label'])
 
-    NMI = normalized_mutual_info_score(adata2.obs['mclust'].values,  adata2.obs['layer'].values)
+    NMI = normalized_mutual_info_score(adata2.obs['mclust'].values,  adata2.obs['label'].values)
     print('TAST NMI = %.5f' %NMI)
     nmi_list[i] = NMI
     if i == 1:
