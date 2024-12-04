@@ -1,11 +1,20 @@
 import scanpy as sc
 from tPCA import tPCA_embedding
 import numpy as np
+import pandas as pd
 from mclustpy import mclustpy
 from sklearn.cluster import AgglomerativeClustering
 from joblib import Parallel, delayed
 from SpaceFlow import SpaceFlow
 from rs import rs_full, rs_index
+
+def res_search_fixed_clus(adata, fixed_clus_count, increment=0.02):
+    for res in sorted(list(np.arange(0.2, 2.5, increment)), reverse=True):
+        sc.tl.leiden(adata, random_state=0, resolution=res)
+        count_unique_leiden = len(pd.DataFrame(adata.obs['leiden']).leiden.unique())
+        if count_unique_leiden == fixed_clus_count:
+            break
+    return res
 
 def preprocess_data(adata):
     if adata.X.shape[1]>3000:
@@ -17,23 +26,36 @@ def preprocess_data(adata):
         sc.pp.log1p(adata)
     return adata
 
-def MCSER_Clustering(adata, X, beta, gamma, m, zeta, n_clusters):
+def MCIST_Clustering(adata, X, beta, gamma, m, zeta, n_clusters, clustering_algo):
     print('Running for Zetas:', zeta)
 
     #tPCA
     Q = tPCA_embedding(X, beta, gamma, m, zeta)
     #Feature Concatenation
     Q2 = adata.obsm['SpaceFlow']
-    Q3 = np.concatenate((Q,Q2), axis = 1)
+    Q3 = np.concatenate((np.real(Q),Q2), axis = 1)
 
-    #Mclust
-    res = mclustpy(np.real(Q3), G=n_clusters, modelNames='EEE', random_seed=2020)
-    mclust_res = res['classification']
-    return mclust_res, Q
+    if clustering_algo == 'Mclust':
+        #Mclust
+        res = mclustpy(np.real(Q3), G=n_clusters, modelNames='EEE', random_seed=2020)
+        mclust_res = res['classification']
+        return mclust_res, np.real(Q)
+    if clustering_algo == 'Leiden':
+        #Leiden
+        adata2 = adata.copy()
+        adata2.var_names_make_unique()
+        adata2.obsm['MCIST_emb'] = np.real(Q3)
+        sc.pp.neighbors(adata2, n_neighbors=20, use_rep='MCIST_emb')
+        eval_resolution = res_search_fixed_clus(adata2, n_clusters)
+        sc.tl.leiden(adata2, key_added="leiden", resolution=eval_resolution)
+        return adata2.obs['leiden'].values, np.real(Q)
+    else:
+        print("Please specify either the 'Mclust' or 'Leiden' clustering algorithms to proceed.")
+        exit(1)
 
-def MCSER_GATE(adata, n_clusters):
+def MCIST_SpaceFlow(adata, n_clusters, clustering_algo):
     # pre processing
-    adata = preprocess_data(adata)
+    #adata = preprocess_data(adata)
     # parameters
     beta = 1e1  
     gamma = 1e2
@@ -52,7 +74,7 @@ def MCSER_GATE(adata, n_clusters):
     [0, 1, 0, 1]]
 
     ################### Deep Learning ######################
-    # displayed here is MCSER combined with STAGATE
+    # displayed here is MCIST combined with STAGATE
     ## this section can be easily replaced with any arbitrary deep learning method
     sf = SpaceFlow.SpaceFlow(adata)
     sf.preprocessing_data(n_top_genes=3000)
@@ -68,17 +90,19 @@ def MCSER_GATE(adata, n_clusters):
          edge_subset_sz=1000000)
     adata.obsm['SpaceFlow'] = sf.embedding
 
-    ####################### MCSER ###########################
+    ####################### MCIST ###########################
     if adata.X.shape[1]>3000:
         adata_highly_variable = adata[:, adata.var['highly_variable']]
         X = adata_highly_variable.X
-        X = X.toarray()
+        if hasattr(X, 'toarray'):
+            X = X.toarray()
     else:
         X = adata.X
-        X = X.toarray()
+        if hasattr(X, 'toarray'):
+            X = X.toarray()
 
     #Topological PCA with different zeta configurations
-    cluster_labels_and_embeddings = Parallel(n_jobs=len(zeta_combinations))(delayed(MCSER_Clustering)(adata, X, beta, gamma, m, zeta, n_clusters) for zeta in zeta_combinations)
+    cluster_labels_and_embeddings = Parallel(n_jobs=len(zeta_combinations))(delayed(MCIST_Clustering)(adata, X, beta, gamma, m, zeta, n_clusters, clustering_algo) for zeta in zeta_combinations)
     cluster_labels = [result[0] for result in cluster_labels_and_embeddings]
 
     ######## Spatial Domain Detection via Agglomerative Clustering ########
@@ -97,7 +121,7 @@ def MCSER_GATE(adata, n_clusters):
     # Agglomerative (Consensus) Clustering 
     agg_clustering = AgglomerativeClustering(n_clusters=n_clusters, metric='precomputed', linkage='average')
     consensus_labels = agg_clustering.fit_predict(1 - co_association_matrix)
-    adata.obs['MCSER_spatial_domains'] = consensus_labels
+    adata.obs['MCIST_spatial_domains'] = consensus_labels
 
     ######## Optimal latent embeddings according to RSI optimization ########
     tPCA_embeddings = [result[1] for result in cluster_labels_and_embeddings]
@@ -112,7 +136,6 @@ def MCSER_GATE(adata, n_clusters):
     indices = [i for i, score in enumerate(scores) if score == max_rsi_score]
     idx = indices[0]
     # store highest performing TAST embedding for downstream analysis
-    adata.obsm['MCSER_emb'] = np.concatenate((tPCA_embeddings[idx], adata.obsm['SpaceFlow']), axis = 1)
+    adata.obsm['MCIST_emb'] = np.concatenate((tPCA_embeddings[idx], np.real(adata.obsm['SpaceFlow'])), axis = 1)
 
     return adata
-
