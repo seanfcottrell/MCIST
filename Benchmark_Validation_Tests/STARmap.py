@@ -6,9 +6,9 @@ import scanpy as sc
 import pandas as pd
 import os
 import sys
-#from MCSER_GATE import MCSER_GATE
-#from MCSER_GraphST import MCSER_GraphST
-from MCSER_SpaceFlow import MCSER_SpaceFlow
+#from MCIST_GATE import MCIST_GATE
+#from MCIST_GraphST import MCIST_GraphST
+from MCIST_SpaceFlow import MCIST_SpaceFlow
 import matplotlib.pyplot as plt
 from mclustpy import mclustpy
 from sklearn.metrics.cluster import normalized_mutual_info_score
@@ -23,8 +23,8 @@ n = adata.obs['label'].nunique()
 ###### GraphST ######
 # Mclust
 #adata2 = adata.copy()
-#adata2 = MCSER_GraphST(adata = adata2, n_clusters = n, clustering_algo='Mclust')
-#res = mclustpy(adata2.obsm['MCSER_emb'], G=n, modelNames='EEE', random_seed=2020)
+#adata2 = MCIST_GraphST(adata = adata2, n_clusters = n, clustering_algo='Mclust')
+#res = mclustpy(adata2.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
 #mclust_res = res['classification']
 
 #NMI_Mclust_GraphST = normalized_mutual_info_score(mclust_res,  adata2.obs['label'].values)
@@ -32,8 +32,8 @@ n = adata.obs['label'].nunique()
 
 # Leiden
 #adata3 = adata.copy()
-#adata3 = MCSER_GraphST(adata = adata3, n_clusters = n, clustering_algo='Leiden')
-#res = mclustpy(adata3.obsm['MCSER_emb'], G=n, modelNames='EEE', random_seed=2020)
+#adata3 = MCIST_GraphST(adata = adata3, n_clusters = n, clustering_algo='Leiden')
+#res = mclustpy(adata3.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
 #mclust_res = res['classification']
 
 #NMI_Leiden_GraphST = normalized_mutual_info_score(mclust_res,  adata3.obs['label'].values)
@@ -43,8 +43,8 @@ n = adata.obs['label'].nunique()
 ###### GATE ######
 # Mclust
 #adata4 = adata.copy()
-#adata4 = MCSER_GATE(adata = adata4, n_clusters = n, spatial_rad_cutoff = 400, clustering_algo='Mclust')
-#res = mclustpy(adata4.obsm['MCSER_emb'], G=n, modelNames='EEE', random_seed=2020)
+#adata4 = MCIST_GATE(adata = adata4, n_clusters = n, spatial_rad_cutoff = 400, clustering_algo='Mclust')
+#res = mclustpy(adata4.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
 #mclust_res = res['classification']
 
 #NMI_Mclust_GATE = normalized_mutual_info_score(mclust_res,  adata4.obs['label'].values)
@@ -52,8 +52,8 @@ n = adata.obs['label'].nunique()
 
 # Leiden
 #adata5 = adata.copy()
-#adata5 = MCSER_GATE(adata = adata3, n_clusters = n, spatial_rad_cutoff = 400, clustering_algo='Leiden')
-#res = mclustpy(adata5.obsm['MCSER_emb'], G=n, modelNames='EEE', random_seed=2020)
+#adata5 = MCIST_GATE(adata = adata3, n_clusters = n, spatial_rad_cutoff = 400, clustering_algo='Leiden')
+#res = mclustpy(adata5.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
 #mclust_res = res['classification']
 
 #NMI_Leiden_GATE = normalized_mutual_info_score(mclust_res,  adata4.obs['label'].values)
@@ -63,16 +63,16 @@ n = adata.obs['label'].nunique()
 ###### SpaceFlow ######
 # Mclust 
 adata6 = adata.copy()
-adata6 = MCSER_SpaceFlow(adata = adata6, n_clusters = n, clustering_algo='Mclust')
-res = mclustpy(adata6.obsm['MCSER_emb'], G=n, modelNames='EEE', random_seed=2020)
+adata6 = MCIST_SpaceFlow(adata = adata6, n_clusters = n, clustering_algo='Mclust')
+res = mclustpy(adata6.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
 mclust_res = res['classification']
 
 NMI_Mclust_SpaceFlow = normalized_mutual_info_score(mclust_res,  adata6.obs['label'].values)
 print('MCIST Mclust SpaceFlow NMI = %.5f' %NMI_Mclust_SpaceFlow)
 # Leiden
 adata7 = adata.copy()
-adata7 = MCSER_SpaceFlow(adata = adata7, n_clusters = n, clustering_algo='Leiden')
-res = mclustpy(adata7.obsm['MCSER_emb'], G=n, modelNames='EEE', random_seed=2020)
+adata7 = MCIST_SpaceFlow(adata = adata7, n_clusters = n, clustering_algo='Leiden')
+res = mclustpy(adata7.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
 mclust_res = res['classification']
 
 NMI_Leiden_SpaceFlow = normalized_mutual_info_score(mclust_res,  adata7.obs['label'].values)
