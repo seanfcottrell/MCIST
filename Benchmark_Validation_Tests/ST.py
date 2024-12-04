@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import matplotlib.pyplot as plt
-#from MCSER_GraphST import MCSER_GraphST
-#from MCSER_GATE import MCSER_GATE 
-from MCSER_SpaceFlow import MCSER_SpaceFlow
+#from MCIST_GraphST import MCIST_GraphST
+#from MCIST_GATE import MCIST_GATE 
+from MCIST_SpaceFlow import MCIST_SpaceFlow
 from sklearn.metrics.cluster import normalized_mutual_info_score
 
 #For BaristaSeq, we combine topological features with the STAGATE embedding
@@ -21,60 +21,60 @@ n = adata.obs['OHE_labels'].nunique()
 ###### GraphST ######
 # Mclust
 #adata2 = adata.copy()
-#adata2 = MCSER_GraphST(adata = adata2, n_clusters = n, clustering_algo='Mclust')
+#adata2 = MCIST_GraphST(adata = adata2, n_clusters = n, clustering_algo='Mclust')
 
 #obs_df = adata2.obs.dropna()
-#NMI_Mclust_GraphST = normalized_mutual_info_score(obs_df['MCSER_spatial_domains'],  obs_df['OHE_labels'])
+#NMI_Mclust_GraphST = normalized_mutual_info_score(obs_df['MCIST_spatial_domains'],  obs_df['OHE_labels'])
 #print('MCIST Mclust GraphST NMI = %.5f' %NMI_Mclust_GraphST)
 
 # Leiden
 #adata3 = adata.copy()
-#adata3 = MCSER_GraphST(adata = adata3, n_clusters = n, clustering_algo='Leiden')
+#adata3 = MCIST_GraphST(adata = adata3, n_clusters = n, clustering_algo='Leiden')
 
 #obs_df = adata3.obs.dropna()
-#NMI_Leiden_GraphST = normalized_mutual_info_score(obs_df['MCSER_spatial_domains'],  obs_df['OHE_labels'])
+#NMI_Leiden_GraphST = normalized_mutual_info_score(obs_df['MCIST_spatial_domains'],  obs_df['OHE_labels'])
 #print('MCIST Leiden GraphST NMI = %.5f' %NMI_Leiden_GraphST)
 
 ####################################################################################################
 ###### GATE ######
 # Mclust
 #adata4 = adata.copy()
-#adata4 = MCSER_GATE(adata = adata4, n_clusters = n, spatial_rad_cutoff = 2, clustering_algo='Mclust')
+#adata4 = MCIST_GATE(adata = adata4, n_clusters = n, spatial_rad_cutoff = 2, clustering_algo='Mclust')
 
 #obs_df = adata4.obs.dropna()
-#NMI_Mclust_GATE = normalized_mutual_info_score(obs_df['MCSER_spatial_domains'],  obs_df['OHE_labels'])
+#NMI_Mclust_GATE = normalized_mutual_info_score(obs_df['MCIST_spatial_domains'],  obs_df['OHE_labels'])
 #print('MCIST Mclust GATE NMI = %.5f' %NMI_Mclust_GATE)
 
 # Leiden
 #adata5 = adata.copy()
-#adata5 = MCSER_GATE(adata = adata3, n_clusters = n, spatial_rad_cutoff = 2, clustering_algo='Leiden')
+#adata5 = MCIST_GATE(adata = adata3, n_clusters = n, spatial_rad_cutoff = 2, clustering_algo='Leiden')
 
 #obs_df = adata5.obs.dropna()
-#NMI_Leiden_GATE = normalized_mutual_info_score(obs_df['MCSER_spatial_domains'],  obs_df['OHE_labels'])
+#NMI_Leiden_GATE = normalized_mutual_info_score(obs_df['MCIST_spatial_domains'],  obs_df['OHE_labels'])
 #print('MCIST Leiden GATE NMI = %.5f' %NMI_Leiden_GATE)
 
 ####################################################################################################
 ###### SpaceFlow ######
 # Mclust 
 adata6 = adata.copy()
-adata6 = MCSER_SpaceFlow(adata = adata6, n_clusters = n, clustering_algo='Mclust')
+adata6 = MCIST_SpaceFlow(adata = adata6, n_clusters = n, clustering_algo='Mclust')
 
 obs_df = adata6.obs.dropna()
-NMI_Mclust_SpaceFlow = normalized_mutual_info_score(obs_df['MCSER_spatial_domains'],  obs_df['OHE_labels'])
+NMI_Mclust_SpaceFlow = normalized_mutual_info_score(obs_df['MCIST_spatial_domains'],  obs_df['OHE_labels'])
 print('MCIST Mclust SpaceFlow NMI = %.5f' %NMI_Mclust_SpaceFlow)
 # Leiden
 adata7 = adata.copy()
-adata7 = MCSER_SpaceFlow(adata = adata7, n_clusters = n, clustering_algo='Leiden')
+adata7 = MCIST_SpaceFlow(adata = adata7, n_clusters = n, clustering_algo='Leiden')
 
 obs_df = adata7.obs.dropna()
-NMI_Leiden_SpaceFlow = normalized_mutual_info_score(obs_df['MCSER_spatial_domains'],  obs_df['OHE_labels'])
+NMI_Leiden_SpaceFlow = normalized_mutual_info_score(obs_df['MCIST_spatial_domains'],  obs_df['OHE_labels'])
 print('MCIST Leiden SpaceFlow NMI = %.5f' %NMI_Leiden_SpaceFlow)
 ####################################################################################################
 
 x = adata6.obs['new_x']
 y = adata6.obs['new_y']
 fig = plt.figure(figsize=(6, 6))
-scatter = plt.scatter(x, y, c=adata6.obs['MCSER_spatial_domains'].values, cmap='tab10', s=55)  
+scatter = plt.scatter(x, y, c=adata6.obs['MCIST_spatial_domains'].values, cmap='tab10', s=55)  
 plt.title(' ')
 plt.gca().invert_yaxis()  
 plt.gca().set_aspect('equal', 'box')  
