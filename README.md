@@ -1,5 +1,5 @@
 # MCIST- MultiScale Cell-Cell Interactive Spatial Transcriptomics Analysis 
-
+![Diagram](MCIST_overview.png "Workflow Diagram")
 MCIST unites the strengths of spatially aware graph deep learning with an ensemble of multiscale topological representations of cell-cell interactions in the gene expression space. 
 
 In this repository we present the files needed to reproduce the clustering benchmarking results stated in our paper. The code for Topological PCA and MCIST is provided. Each of the deep learning modules must be downloaded from their original repositories to be used in MCIST. STAGATE is available at https://github.com/zhanglabtools/STAGATE. SpaceFlow is available at https://github.com/hongleir/SpaceFlow. GraphST is available at https://github.com/JinmiaoChenLab/GraphST. 
