@@ -4,6 +4,8 @@ MCIST unites the strengths of spatially aware graph deep learning with an ensemb
 
 In this repository we present the files needed to reproduce the clustering benchmarking results stated in our paper. The code for Topological PCA and MCIST is provided, as well as a convenient environment setup. Each of the deep learning modules are automatically added to the environment via our provided yaml file. Otherwise, they must be downloaded from their original repositories to be used in MCIST. STAGATE is available at https://github.com/zhanglabtools/STAGATE. SpaceFlow is available at https://github.com/hongleir/SpaceFlow. GraphST is available at https://github.com/JinmiaoChenLab/GraphST. 
 
+To set up our provided environment, simply run '''conda env create -f MCIST_cpu.yml''' in your bash terminal. 
+
 # Benchmark Validation Tests
 For separate deep learning modules which can be included in the MCIST workflow, it is recommended to create and activate separate virtual environments. Once your workspace is properly set, you can run the tests for each dataset by specifying the argument (i.e. python ST.py 'H1' or python Visium_DLPFC.py '151673'). 
 
