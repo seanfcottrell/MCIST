@@ -8,13 +8,22 @@ In this repository we present the files needed to reproduce the clustering bench
 # Benchmark Validation Tests
 For reproducability in accordance with the referenced benchmarking study, MCIST relies on specified package versions:
 
+Python==3.8
+
 torch>=1.8.0
+
 cudnn>=10.2
+
 numpy==1.22.3
+
 scanpy==1.9.1
+
 anndata==0.8.0
+
 rpy2==3.4.1
+
 scipy==1.8.1
+
 scikit-learn==1.1.1
 
 which is compatible with the stated versions used in each of the baseline spatial DL models. Upon downloading the DL models, one will need to update the filepaths to reflect your workspace. For example, MCIST_SpaceFlow will need to import SpaceFlow from the proper directory. For separate deep learning modules it is recommended to create and activate separate virtual environments. Once your workspace is properly set, you can run the tests for each dataset by specifying the argument (i.e. python ST.py 'H1' or python Visium_DLPFC.py '151673'). 
