@@ -13,81 +13,59 @@ import matplotlib.pyplot as plt
 from mclustpy import mclustpy
 from sklearn.metrics.cluster import normalized_mutual_info_score
 
+def res_search_fixed_clus(
+    adata,
+    fixed_clus_count,
+    emb_key: str,         # name of your obsm, e.g. "STAGATE" or "MCIST_emb"
+    n_neighbors: int = 20,
+    increment: float = 0.02,
+):
+    """
+    Search for a leiden resolution that yields exactly `fixed_clus_count`
+    clusters *on the neighbors‐graph built from* adata.obsm[emb_key].
+    """
+    # 1) build the graph ONCE:
+    sc.pp.neighbors(
+        adata,
+        n_neighbors=n_neighbors,
+        use_rep=emb_key,
+        key_added='neighbors_' + emb_key  # e.g. "neighbors_STAGATE"
+    )
+
+    # 2) loop through resolutions, always referring back to that same graph:
+    graph_key = 'neighbors_' + emb_key
+    for res in sorted(np.arange(0.2, 2.5, increment), reverse=True):
+        # this will write to adata.obs['leiden']
+        sc.tl.leiden(
+            adata,
+            resolution=res,
+            neighbors_key=graph_key,
+            key_added='leiden'  # or 'leiden_'+emb_key to keep them all
+        )
+
+        n_found = adata.obs['leiden'].nunique()
+        if n_found == fixed_clus_count:
+            return res
+
+    raise ValueError(f"Couldn’t find a resolution yielding {fixed_clus_count} clusters")
+
 #For STARmap
-section_id = sys.argv[1]
-adata = sc.read('/mnt/home/cottre61/GFP-GAT/STAGATE_pyG/SpatialTranscriptomics/STARmap.h5ad')
+adata = sc.read('./SpatialTranscriptomics/STARmap.h5ad')
 
 #Validation
 n = adata.obs['label'].nunique()
 ####################################################################################################
-###### GraphST ######
-# Mclust
-#adata2 = adata.copy()
-#adata2 = MCIST_GraphST(adata = adata2, n_clusters = n, clustering_algo='Mclust')
-#res = mclustpy(adata2.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
-#mclust_res = res['classification']
-
-#NMI_Mclust_GraphST = normalized_mutual_info_score(mclust_res,  adata2.obs['label'].values)
-#print('MCIST Mclust GraphST NMI = %.5f' %NMI_Mclust_GraphST)
-
-# Leiden
-#adata3 = adata.copy()
-#adata3 = MCIST_GraphST(adata = adata3, n_clusters = n, clustering_algo='Leiden')
-#res = mclustpy(adata3.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
-#mclust_res = res['classification']
-
-#NMI_Leiden_GraphST = normalized_mutual_info_score(mclust_res,  adata3.obs['label'].values)
-#print('MCIST Leiden GraphST NMI = %.5f' %NMI_Leiden_GraphST)
-
-####################################################################################################
-###### GATE ######
-# Mclust
-#adata4 = adata.copy()
-#adata4 = MCIST_GATE(adata = adata4, n_clusters = n, spatial_rad_cutoff = 400, clustering_algo='Mclust')
-#res = mclustpy(adata4.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
-#mclust_res = res['classification']
-
-#NMI_Mclust_GATE = normalized_mutual_info_score(mclust_res,  adata4.obs['label'].values)
-#print('MCIST Mclust GATE NMI = %.5f' %NMI_Mclust_GATE)
-
-# Leiden
-#adata5 = adata.copy()
-#adata5 = MCIST_GATE(adata = adata3, n_clusters = n, spatial_rad_cutoff = 400, clustering_algo='Leiden')
-#res = mclustpy(adata5.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
-#mclust_res = res['classification']
-
-#NMI_Leiden_GATE = normalized_mutual_info_score(mclust_res,  adata4.obs['label'].values)
-#print('MCIST Leiden GATE NMI = %.5f' %NMI_Leiden_GATE)
-
-####################################################################################################
-###### SpaceFlow ######
-# Mclust 
 adata6 = adata.copy()
-adata6 = MCIST_SpaceFlow(adata = adata6, n_clusters = n, clustering_algo='Mclust')
-res = mclustpy(adata6.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
-mclust_res = res['classification']
+adata6 = MCIST_SpaceFlow(adata = adata6, n_clusters = n, clustering_algo='Leiden')
 
-NMI_Mclust_SpaceFlow = normalized_mutual_info_score(mclust_res,  adata6.obs['label'].values)
-print('MCIST Mclust SpaceFlow NMI = %.5f' %NMI_Mclust_SpaceFlow)
-# Leiden
-adata7 = adata.copy()
-adata7 = MCIST_SpaceFlow(adata = adata7, n_clusters = n, clustering_algo='Leiden')
-res = mclustpy(adata7.obsm['MCIST_emb'], G=n, modelNames='EEE', random_seed=2020)
-mclust_res = res['classification']
+res = res_search_fixed_clus(adata6, n, 'SpaceFlow')
+#res = mclustpy(np.real(adata6.obsm['SpaceFlow']), G=n, modelNames='EEE', random_seed=2020)
+#mclust_res = res['classification']
+#adata6.obs['SF_mclust'] = mclust_res
 
-NMI_Leiden_SpaceFlow = normalized_mutual_info_score(mclust_res,  adata7.obs['label'].values)
-print('MCIST Leiden SpaceFlow NMI = %.5f' %NMI_Leiden_SpaceFlow)
-
-####################################################################################################
-
-#Write results to CSV for easy check
-results = {
-        'Dataset': [section_id],
-        'MCIST SpaceFlow Mclust NMI': [NMI_Mclust_SpaceFlow],
-        'MCIST SpaceFlow Leiden NMI': [NMI_Leiden_SpaceFlow]
-    }
-
-results_df = pd.DataFrame(results)
-file_path = 'STARmap_SF_results.csv'
-file_exists = os.path.exists(file_path)
-results_df.to_csv(file_path, mode='a', index=False, header=not file_exists)
+obs_df = adata6.obs.dropna()
+NMI_Mclust_SpaceFlow = normalized_mutual_info_score(obs_df['MCIST_spatial_domains'],  obs_df['label'])
+NMI = normalized_mutual_info_score(obs_df['leiden'],  obs_df['label'])
+#NMI = normalized_mutual_info_score(obs_df['SF_mclust'],  obs_df['ground_truth'])
+print('MCIST NMI = %.5f' %NMI_Mclust_SpaceFlow)
+print('SpaceFlow NMI = %.5f' %NMI)
