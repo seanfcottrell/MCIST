@@ -1,14 +1,16 @@
 import scanpy as sc
+import pandas as pd
 from tPCA import tPCA_embedding
 import numpy as np
-import pandas as pd
+import torch
+from sklearn.cross_decomposition import CCA
 from mclustpy import mclustpy
 from sklearn.cluster import AgglomerativeClustering
 from joblib import Parallel, delayed
 from sklearn.decomposition import PCA
 from GraphST import GraphST
-import torch
 from rs import rs_full, rs_index
+from sklearn.preprocessing import StandardScaler
 
 def res_search_fixed_clus(adata, fixed_clus_count, increment=0.02):
     for res in sorted(list(np.arange(0.2, 2.5, increment)), reverse=True):
@@ -28,16 +30,19 @@ def preprocess_data(adata):
         sc.pp.log1p(adata)
     return adata
 
-
-def MCIST_Clustering(adata, X, beta, gamma, m, zeta, n_clusters, clustering_algo):
+def MCIST_Clustering(adata, X, beta, gamma, m1, m2, zeta, n_clusters, clustering_algo):
     print('Running for Zetas:', zeta)
 
     #tPCA
-    Q = tPCA_embedding(X, beta, gamma, m, zeta)
+    Q = tPCA_embedding(X, beta, gamma, m2, zeta)
     #Feature Concatenation
-    pca = PCA(n_components=20, random_state=42) 
+    pca = PCA(n_components=m2, random_state=42) 
     Q2 = pca.fit_transform(adata.obsm['emb'].copy())
-    Q3 = np.concatenate((np.real(Q),Q2), axis = 1)
+    cca = CCA(n_components=m1
+            )
+    cca.fit(Q, Q2)
+    U_kcca, Q3 = cca.transform(Q,Q2)
+
 
     if clustering_algo == 'Mclust':
         #Mclust
@@ -57,37 +62,26 @@ def MCIST_Clustering(adata, X, beta, gamma, m, zeta, n_clusters, clustering_algo
         print("Please specify either the 'Mclust' or 'Leiden' clustering algorithms to proceed.")
         exit(1)
 
-def MCIST_GraphST(adata, n_clusters, clustering_algo):
+def MCIST_GraphST(adata, n_clusters, clustering_algo, beta=1, gamma=1, m1=20, m2=40):
     # pre processing
     adata = preprocess_data(adata)
     # parameters
-    beta = 1e1  
-    gamma = 1e2
-    if adata.X.shape[1]>3000:
-        m = 20
-    else:
-        m = 10
     zeta_combinations = [
     [0, 0, 0, 1],
-    [1, 0, 0, 1],
-    [1, 1, 0, 1],
-    [1, 1, 1, 1],
-    [0, 1, 1, 1],
-    [0, 0, 1, 1],
-    [1, 0, 1, 1],
-    [0, 1, 0, 1]]
+    [0, 0, 1, 0],
+    [0, 1, 0, 0],
+    [1, 0, 0, 0]]
 
     ################### Deep Learning ######################
-    # displayed here is TAST combined with GraphST
+    # displayed here is MCIST combined with STAGATE
     ## this section can be easily replaced with any arbitrary deep learning method
     device = torch.device('cuda:3' if torch.cuda.is_available() else 'cpu')
     model = GraphST.GraphST(adata, datatype='Stereo', device=device)
     # run model
     adata = model.train()
 
+
     ####################### MCIST ###########################
-    #Filtering
-    sc.pp.highly_variable_genes(adata, flavor="seurat_v3", n_top_genes=3000)
     if adata.X.shape[1]>3000:
         adata_highly_variable = adata[:, adata.var['highly_variable']]
         X = adata_highly_variable.X
@@ -99,7 +93,7 @@ def MCIST_GraphST(adata, n_clusters, clustering_algo):
             X = X.toarray()
 
     #Topological PCA with different zeta configurations
-    cluster_labels_and_embeddings = Parallel(n_jobs=len(zeta_combinations))(delayed(MCIST_Clustering)(adata, X, beta, gamma, m, zeta, n_clusters, clustering_algo) for zeta in zeta_combinations)
+    cluster_labels_and_embeddings = Parallel(n_jobs=len(zeta_combinations))(delayed(MCIST_Clustering)(adata, X, beta, gamma, m1, m2, zeta, n_clusters, clustering_algo) for zeta in zeta_combinations)
     cluster_labels = [result[0] for result in cluster_labels_and_embeddings]
 
     ######## Spatial Domain Detection via Agglomerative Clustering ########
@@ -135,6 +129,12 @@ def MCIST_GraphST(adata, n_clusters, clustering_algo):
     # store highest performing TAST embedding for downstream analysis
     pca = PCA(n_components=20, random_state=42) 
     Q2 = pca.fit_transform(adata.obsm['emb'].copy())
-    adata.obsm['MCIST_emb'] = np.concatenate((tPCA_embeddings[idx], Q2), axis = 1)
+    adata.obsm['GraphST'] = Q2
+    Q = tPCA_embeddings[idx]
+    cca = CCA(n_components=m1
+            )
+    cca.fit(Q, Q2)
+    U_kcca, Q3 = cca.transform(Q,Q2)
+    adata.obsm['MCIST_emb'] = Q3
 
     return adata
