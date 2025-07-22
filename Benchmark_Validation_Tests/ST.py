@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 from MCIST_SpaceFlow import MCIST_SpaceFlow
 from sklearn.metrics.cluster import normalized_mutual_info_score
 
-#For BaristaSeq, we combine topological features with the STAGATE embedding
 #Load Data
 section_id = sys.argv[1]
 adata = sc.read('./SpatialTranscriptomics/'+section_id+'.h5ad')
