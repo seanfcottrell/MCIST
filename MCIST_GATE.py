@@ -2,11 +2,14 @@ import scanpy as sc
 import pandas as pd
 from tPCA import tPCA_embedding
 import numpy as np
+import torch
+from sklearn.cross_decomposition import CCA
 from mclustpy import mclustpy
 from sklearn.cluster import AgglomerativeClustering
 from joblib import Parallel, delayed
 import STAGATE_pyG as STAGATE
 from rs import rs_full, rs_index
+from sklearn.preprocessing import StandardScaler
 
 def res_search_fixed_clus(adata, fixed_clus_count, increment=0.02):
     for res in sorted(list(np.arange(0.2, 2.5, increment)), reverse=True):
@@ -26,14 +29,18 @@ def preprocess_data(adata):
         sc.pp.log1p(adata)
     return adata
 
-def MCIST_Clustering(adata, X, beta, gamma, m, zeta, n_clusters, clustering_algo):
+def MCIST_Clustering(adata, X, beta, gamma, m1, m2, zeta, n_clusters, clustering_algo):
     print('Running for Zetas:', zeta)
 
     #tPCA
-    Q = tPCA_embedding(X, beta, gamma, m, zeta)
+    Q = tPCA_embedding(X, beta, gamma, m2, zeta)
     #Feature Concatenation
     Q2 = adata.obsm['STAGATE']
-    Q3 = np.concatenate((np.real(Q),Q2), axis = 1)
+    cca = CCA(n_components=m1
+            )
+    cca.fit(Q, Q2)
+    U_kcca, Q3 = cca.transform(Q,Q2)
+
 
     if clustering_algo == 'Mclust':
         #Mclust
@@ -53,32 +60,22 @@ def MCIST_Clustering(adata, X, beta, gamma, m, zeta, n_clusters, clustering_algo
         print("Please specify either the 'Mclust' or 'Leiden' clustering algorithms to proceed.")
         exit(1)
 
-def MCIST_GATE(adata, n_clusters, spatial_rad_cutoff, clustering_algo):
+def MCIST_GATE(adata, n_clusters, spatial_rad_cutoff, clustering_algo, beta=1, gamma=1, m1=20, m2=40):
     # pre processing
     adata = preprocess_data(adata)
     # parameters
-    beta = 1e1  
-    gamma = 1e2
-    if adata.X.shape[1]>3000:
-        m = 20
-    else:
-        m = 10
     zeta_combinations = [
     [0, 0, 0, 1],
-    [1, 0, 0, 1],
-    [1, 1, 0, 1],
-    [1, 1, 1, 1],
-    [0, 1, 1, 1],
-    [0, 0, 1, 1],
-    [1, 0, 1, 1],
-    [0, 1, 0, 1]]
+    [0, 0, 1, 0],
+    [0, 1, 0, 0],
+    [1, 0, 0, 0]]
 
     ################### Deep Learning ######################
     # displayed here is MCIST combined with STAGATE
     ## this section can be easily replaced with any arbitrary deep learning method
     STAGATE.Cal_Spatial_Net(adata, rad_cutoff=spatial_rad_cutoff) #rad_cutoff will depend on your data
     STAGATE.Stats_Spatial_Net(adata)
-    adata = STAGATE.train_STAGATE(adata)
+    adata = STAGATE.train_STAGATE(adata,hidden_dims=[512, m2])
 
     ####################### MCIST ###########################
     if adata.X.shape[1]>3000:
@@ -92,7 +89,7 @@ def MCIST_GATE(adata, n_clusters, spatial_rad_cutoff, clustering_algo):
             X = X.toarray()
 
     #Topological PCA with different zeta configurations
-    cluster_labels_and_embeddings = Parallel(n_jobs=len(zeta_combinations))(delayed(MCIST_Clustering)(adata, X, beta, gamma, m, zeta, n_clusters, clustering_algo) for zeta in zeta_combinations)
+    cluster_labels_and_embeddings = Parallel(n_jobs=len(zeta_combinations))(delayed(MCIST_Clustering)(adata, X, beta, gamma, m1, m2, zeta, n_clusters, clustering_algo) for zeta in zeta_combinations)
     cluster_labels = [result[0] for result in cluster_labels_and_embeddings]
 
     ######## Spatial Domain Detection via Agglomerative Clustering ########
@@ -126,6 +123,12 @@ def MCIST_GATE(adata, n_clusters, spatial_rad_cutoff, clustering_algo):
     indices = [i for i, score in enumerate(scores) if score == max_rsi_score]
     idx = indices[0]
     # store highest performing TAST embedding for downstream analysis
-    adata.obsm['MCIST_emb'] = np.concatenate((tPCA_embeddings[idx], adata.obsm['STAGATE']), axis = 1)
+    Q = tPCA_embeddings[idx]
+    Q2 = adata.obsm['STAGATE']
+    cca = CCA(n_components=m1
+            )
+    cca.fit(Q, Q2)
+    U_kcca, Q3 = cca.transform(Q,Q2)
+    adata.obsm['MCIST_emb'] = Q3
 
     return adata
