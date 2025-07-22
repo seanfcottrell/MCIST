@@ -1,4 +1,7 @@
 import numpy as np
+from scipy.spatial.distance import cdist
+from sklearn.neighbors import NearestNeighbors
+import scipy.sparse as sp
 
 #Topological PCA provides topological features for concatenation
 
@@ -8,23 +11,8 @@ def gaussian_kernel(dist, t):
     '''
     return np.exp(-(dist**2 / t))
 
-def Eu_dis(x):
-    """
-    Calculate the distance among each raw of x
-    :param x: N X D
-                N: number of samples
-                D: Dimension of the feature
-    :return: N X N distance matrix
-    """
-    x = np.asarray(x)
-    aa = np.sum(np.multiply(x, x), 1)
-    ab = x @ x.T
-    dist_mat = aa + aa.T - 2 * ab
-    dist_mat[dist_mat < 0] = 0
-    dist_mat = np.sqrt(dist_mat)
-    dist_mat = np.maximum(dist_mat, dist_mat.T)
-    dist_mat = np.asarray(dist_mat)
-    return dist_mat
+def Eu_dis(X: np.ndarray) -> np.ndarray:
+    return cdist(X, X, "euclidean")        
 
 def cal_weighted_adj(data, n_neighbors, t):
     '''
@@ -84,7 +72,7 @@ def tPCA_Algorithm(xMat,laplace,beta,gamma,k,n):
     # Initialize thresholds, matrices
     obj1 = 0
     obj2 = 0
-    thresh = 1e-50
+    thresh = 1e-6
     V = np.eye(n) 
     vMat = np.asarray(V) # Auxillary matrix to optimize L2,1 norm
     E = np.ones((xMat.shape[0],xMat.shape[1]))
@@ -93,10 +81,10 @@ def tPCA_Algorithm(xMat,laplace,beta,gamma,k,n):
     C = np.asarray(C) # Lagrangian Multiplier
     laplace = np.asarray(laplace) #Lplacian
     miu = 1 #Penalty Term
-    for m in range(0, 30):
+    for m in range(0, 35):
         Z = (-(miu/2) * ((E - xMat + C/miu).T @ (E - xMat + C/miu))) + beta * vMat + gamma * laplace
         # cal Q (Projected Data Matrix)
-        Z_eigVals, Z_eigVects = np.linalg.eig(np.asarray(Z))
+        Z_eigVals, Z_eigVects = np.linalg.eigh(np.asarray(Z))
         eigValIndice = np.argsort(Z_eigVals)
         n_eigValIndice = eigValIndice[0:k]
         n_Z_eigVect = Z_eigVects[:, n_eigValIndice]
@@ -164,7 +152,7 @@ def tPCA_embedding(X, beta, gamma, k, zeta):
     PDM = tPCA_cal_projections_KNN(X, beta, gamma, k, 15, zeta)
     PDM = np.asarray(PDM)
     #print(PDM.shape)
-    TM = ((np.linalg.inv(PDM.T @ PDM)) @ (PDM.T)).T
+    TM = (np.linalg.solve(PDM.T @ PDM, PDM.T)).T
     #Projected Data Matrix
     Q = (X @ TM)
     #print(Q.shape)
